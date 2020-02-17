@@ -1,35 +1,153 @@
-const Manager = require("./lib/Manager");
-const Engineer = require("./lib/Engineer");
-const Intern = require("./lib/Intern");
-const inquirer = require("inquirer");
-const path = require("path");
-const fs = require("fs");
-​
-const OUTPUT_DIR = path.resolve(__dirname, "output")
-const outputPath = path.join(OUTPUT_DIR, "team.html");
-​
-const render = require("./lib/htmlRenderer");
-​
-​
-// Write code to use inquirer to gather information about the development team members,
-// and to create objects for each team member (using the correct classes as blueprints!)
-​
-// After the user has input all employees desired, call the `render` function (required
-// above) and pass in an array containing all employee objects; the `render` function will
-// generate and return a block of HTML including templated divs for each employee!
-​
-// After you have your html, you're now ready to create an HTML file using the HTML
-// returned from the `render` function. Now write it to a file named `team.html` in the
-// `output` folder. You can use the variable `outputPath` above target this location.
-// Hint: you may need to check if the `output` folder exists and create it if it
-// does not.
-​
-// HINT: each employee type (manager, engineer, or intern) has slightly different
-// information; write your code to ask different questions via inquirer depending on
-// employee type.
-​
-// HINT: make sure to build out your classes first! Remember that your Manager, Engineer,
-// and Intern classes should all extend from a class named Employee; see the directions
-// for further information. Be sure to test out each class and verify it generates an 
-// object with the correct structure and methods. This structure will be crucial in order
-// for the provided `render` function to work!```
+const Manager = require('./lib/Manager');
+const Engineer = require('./lib/Engineer');
+const Intern = require('./lib/Intern');
+const inquirer = require('inquirer');
+const path = require('path');
+const fs = require('fs');
+const OUTPUT_DIR = path.resolve(__dirname, 'output');
+const outputPath = path.join(OUTPUT_DIR, 'team.html');
+const renderer = require('./lib/htmlRenderer.js');
+
+const init = async () => {
+    try {
+
+        const employees = [];
+        console.log('Enter manager details');
+
+        const mngObj = await managerDetails();
+        employees.push(mngObj);
+        console.log('Enter Enginners details ??');
+        let inputs = [];
+        const engineerInfo = await getEngineersDetails();
+        console.log(engineerInfo);
+        for (let i = 0; i < engineerInfo.length; i++) {
+            const engineerObj = new Engineer(engineerInfo[i].name, engineerInfo[i].id, engineerInfo[i].email, engineerInfo[i].gitHubUname);
+            employees.push(engineerObj);
+        }
+        const internInfo = await getInternsDetails();
+        console.log(internInfo);
+        for (let i = 0; i < internInfo.length; i++) {
+            const internObj = new Intern(internInfo[i].name, internInfo[i].id, internInfo[i].email, internInfo[i].school);
+            employees.push(internObj);
+        }
+        console.log(employees);
+        const html = renderer.render(employees);
+        fs.writeFileSync(outputPath, html, (err) => {
+            if (err) {
+                return console.error(err.message);
+            }
+        })
+
+    }
+    catch (err) {
+        if (err) {
+            console.error(err.message);
+
+        }
+    }
+}
+
+async function managerDetails() {
+    const manager = inquirer.prompt([
+        {
+            type: 'input',
+            message: 'Enter Manager name ?',
+            name: 'name'
+        },
+        {
+            type: 'input',
+            message: 'Enter manager id ?',
+            name: 'id'
+        },
+        {
+            type: 'input',
+            message: 'Enter manager email address ?',
+            name: 'email'
+        },
+        {
+            type: 'input',
+            message: 'Enter manager office number?',
+            name: 'officeNumber'
+        }
+    ]);
+    const mngObj = new Manager((await manager).name, (await manager).id, (await manager).email, (await manager).officeNumber);
+    return mngObj;
+}
+
+const getEngineersDetails = async (inputs = []) => {
+
+    const prompts = [
+        {
+            type: 'input',
+            message: 'Enter Engineer name ?',
+            name: 'name'
+        },
+        {
+            type: 'input',
+            message: 'Enter Engineer id ?',
+            name: 'id'
+        },
+        {
+            type: 'input',
+            message: 'Enter Engineer email address ?',
+            name: 'email'
+        },
+        {
+            type: 'input',
+            message: 'Enter Engineer GitHub Username?',
+            name: 'gitHubUname'
+        },
+        {
+            type: 'confirm',
+            name: 'again',
+            message: 'Want to enter another Engineer details ?',
+            default: true
+        }
+    ];
+
+
+
+    // const prompts = (empType === 'engineer') ? prompts1 : prompts2;
+    const { again, ...answers } = await inquirer.prompt(prompts);
+    const newInputs = [...inputs, answers];
+    return again ? getEngineersDetails(newInputs) : newInputs;
+};
+
+const getInternsDetails = async (inputs = []) => {
+
+    const prompts = [
+        {
+            type: 'input',
+            message: 'Enter Intern name ?',
+            name: 'name'
+        },
+        {
+            type: 'input',
+            message: 'Enter Intern id ?',
+            name: 'id'
+        },
+        {
+            type: 'input',
+            message: 'Enter Intern email address ?',
+            name: 'email'
+        },
+        {
+            type: 'input',
+            message: 'Enter Intern School?',
+            name: 'school'
+        },
+        {
+            type: 'confirm',
+            name: 'again',
+            message: 'Want to enter another Intern details ?',
+            default: true
+        }
+    ];
+
+    // const prompts = (empType === 'engineer') ? prompts1 : prompts2;
+    const { again, ...answers } = await inquirer.prompt(prompts);
+    const newInputs = [...inputs, answers];
+    return again ? getInternsDetails(newInputs) : newInputs;
+};
+
+init();
