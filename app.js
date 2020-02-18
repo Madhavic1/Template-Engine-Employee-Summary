@@ -12,37 +12,55 @@ const init = async () => {
     try {
 
         const employees = [];
-        console.log('Enter manager details');
-
+        console.log('****Enter manager details****');
         const mngObj = await managerDetails();
         employees.push(mngObj);
-        console.log('Enter Enginners details ??');
-        let inputs = [];
-        const engineerInfo = await getEngineersDetails();
-        console.log(engineerInfo);
-        for (let i = 0; i < engineerInfo.length; i++) {
-            const engineerObj = new Engineer(engineerInfo[i].name, engineerInfo[i].id, engineerInfo[i].email, engineerInfo[i].gitHubUname);
-            employees.push(engineerObj);
+        // console.log('***Enter Engineers details*** ');
+        const wantEngineerDetails = await inquirer.prompt([
+            {
+                type : 'confirm',
+                message : 'Do you want to enter Engineer details ?',
+                name : 'wantToEnterEngineer'
+            }
+        ]);
+        console.log('--wantEngineerDetails-- ' + wantEngineerDetails.wantToEnterEngineer);
+        if (wantEngineerDetails.wantToEnterEngineer === true) {
+            const engineerInfo = await getEngineersDetails();
+            for (let i = 0; i < engineerInfo.length; i++) {
+                const engineerObj = new Engineer(engineerInfo[i].name, engineerInfo[i].id, engineerInfo[i].email, engineerInfo[i].gitHubUname);
+                employees.push(engineerObj);
+            }
         }
-        const internInfo = await getInternsDetails();
-        console.log(internInfo);
-        for (let i = 0; i < internInfo.length; i++) {
-            const internObj = new Intern(internInfo[i].name, internInfo[i].id, internInfo[i].email, internInfo[i].school);
-            employees.push(internObj);
+        const wantInternDetails = await inquirer.prompt([
+            {
+                type : 'confirm',
+                message : 'Do you want to enter Intern details ?',
+                name : 'wantToEnterIntern'
+            }
+        ]);
+        if (wantInternDetails.wantToEnterIntern === true) {
+            const internInfo = await getInternsDetails();
+            for (let i = 0; i < internInfo.length; i++) {
+                const internObj = new Intern(internInfo[i].name, internInfo[i].id, internInfo[i].email, internInfo[i].school);
+                employees.push(internObj);
+            }
         }
-        console.log(employees);
+       
         const html = renderer.render(employees);
+        //check if the output folder exists or not . If not exists ,below code  creates the folder.
+        if (!fs.existsSync(OUTPUT_DIR)) //fs.existsSync(OUTPUT_DIR) returns false if the directory doesnot exist
+        {
+            fs.mkdirSync(OUTPUT_DIR);
+        }
         fs.writeFileSync(outputPath, html, (err) => {
             if (err) {
                 return console.error(err.message);
             }
         })
-
     }
     catch (err) {
         if (err) {
             console.error(err.message);
-
         }
     }
 }
@@ -52,22 +70,35 @@ async function managerDetails() {
         {
             type: 'input',
             message: 'Enter Manager name ?',
-            name: 'name'
+            name: 'name',
+            validate: function (val) {
+                return validateName(val);
+            }
         },
         {
             type: 'input',
             message: 'Enter manager id ?',
-            name: 'id'
+            name: 'id',
+            validate: function (value) {
+                return validateNumber(value);
+            }
         },
         {
             type: 'input',
             message: 'Enter manager email address ?',
-            name: 'email'
+            name: 'email',
+            validate: function (email) {
+                //Regular Expression (Not accepts second @ symbol before the @gmail.com and accepts everything else) 
+                return validateEmail(email);
+            }
         },
         {
             type: 'input',
             message: 'Enter manager office number?',
-            name: 'officeNumber'
+            name: 'officeNumber',
+            validate: function (value) {
+                return validateNumber(value);
+            }
         }
     ]);
     const mngObj = new Manager((await manager).name, (await manager).id, (await manager).email, (await manager).officeNumber);
@@ -80,22 +111,36 @@ const getEngineersDetails = async (inputs = []) => {
         {
             type: 'input',
             message: 'Enter Engineer name ?',
-            name: 'name'
+            name: 'name',
+            validate: function (val) {
+                return validateName(val);
+            }
         },
         {
             type: 'input',
             message: 'Enter Engineer id ?',
-            name: 'id'
+            name: 'id',
+            validate: function (value) {
+                return validateNumber(value);
+            }
         },
         {
             type: 'input',
             message: 'Enter Engineer email address ?',
-            name: 'email'
+            name: 'email',
+            // validate : function(val){
+            //     var valid = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}/igm;
+            //     return valid || "Please enter a valid email !!";
+            // }
+            validate: function (email) {
+                return validateEmail(email);
+            }
         },
         {
             type: 'input',
             message: 'Enter Engineer GitHub Username?',
-            name: 'gitHubUname'
+            name: 'gitHubUname',
+            default: 'Not Provided'
         },
         {
             type: 'confirm',
@@ -119,22 +164,32 @@ const getInternsDetails = async (inputs = []) => {
         {
             type: 'input',
             message: 'Enter Intern name ?',
-            name: 'name'
+            name: 'name',
+            validate: function (val) {
+                return validateName(val);
+            }
         },
         {
             type: 'input',
             message: 'Enter Intern id ?',
-            name: 'id'
+            name: 'id',
+            validate: function (value) {
+                return validateNumber(value);
+            }
         },
         {
             type: 'input',
             message: 'Enter Intern email address ?',
-            name: 'email'
+            name: 'email',
+            validate: function (email) {
+                return validateEmail(email);
+            }
         },
         {
             type: 'input',
             message: 'Enter Intern School?',
-            name: 'school'
+            name: 'school',
+            default: 'Not Provided'
         },
         {
             type: 'confirm',
@@ -149,5 +204,25 @@ const getInternsDetails = async (inputs = []) => {
     const newInputs = [...inputs, answers];
     return again ? getInternsDetails(newInputs) : newInputs;
 };
+
+function validateEmail(email) {
+    //Regular Expression (Not accepts second @ symbol before the @gmail.com and accepts everything else) 
+    var regexp = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    var valid = regexp.test(String(email));
+    // Converting the email to lowercase 
+    // return regexp.test(String(email).toLowerCase()); 
+    return valid || 'Please enter email address in the format \"test@test.com\"';
+}
+
+function validateName(val) {
+    var regName = /^[a-zA-Z]+ [a-zA-Z]+$/;
+    var valid = regName.test(val);
+    return valid || 'Please Enter valid name. Ex : <First name> <Last Name> !!';
+}
+
+function validateNumber(value) {
+    var valid = !isNaN(parseFloat(value));
+    return valid || "Please enter a number";
+}
 
 init();
