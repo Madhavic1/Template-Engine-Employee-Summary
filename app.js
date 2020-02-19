@@ -15,7 +15,6 @@ const init = async () => {
         console.log('****Enter manager details****');
         const mngObj = await managerDetails();
         employees.push(mngObj);
-        // console.log('***Enter Engineers details*** ');
         const wantEngineerDetails = await inquirer.prompt([
             {
                 type : 'confirm',
@@ -23,10 +22,14 @@ const init = async () => {
                 name : 'wantToEnterEngineer'
             }
         ]);
-        console.log('--wantEngineerDetails-- ' + wantEngineerDetails.wantToEnterEngineer);
         if (wantEngineerDetails.wantToEnterEngineer === true) {
             const engineerInfo = await getEngineersDetails();
             for (let i = 0; i < engineerInfo.length; i++) {
+                if(engineerInfo[i].gitHubUname === 'Not Provided')
+                {
+                    engineerInfo[i].gitHubUname = 'Not Provided';
+                    
+                }
                 const engineerObj = new Engineer(engineerInfo[i].name, engineerInfo[i].id, engineerInfo[i].email, engineerInfo[i].gitHubUname);
                 employees.push(engineerObj);
             }
@@ -80,7 +83,7 @@ async function managerDetails() {
             message: 'Enter manager id ?',
             name: 'id',
             validate: function (value) {
-                return validateNumber(value);
+                return validateNumber('id',value);
             }
         },
         {
@@ -97,7 +100,7 @@ async function managerDetails() {
             message: 'Enter manager office number?',
             name: 'officeNumber',
             validate: function (value) {
-                return validateNumber(value);
+                return validateNumber('officeNumber',value);
             }
         }
     ]);
@@ -121,7 +124,7 @@ const getEngineersDetails = async (inputs = []) => {
             message: 'Enter Engineer id ?',
             name: 'id',
             validate: function (value) {
-                return validateNumber(value);
+                return validateNumber('id',value);
             }
         },
         {
@@ -174,7 +177,7 @@ const getInternsDetails = async (inputs = []) => {
             message: 'Enter Intern id ?',
             name: 'id',
             validate: function (value) {
-                return validateNumber(value);
+                return validateNumber('id',value);
             }
         },
         {
@@ -220,9 +223,20 @@ function validateName(val) {
     return valid || 'Please Enter valid name. Ex : <First name> <Last Name> !!';
 }
 
-function validateNumber(value) {
-    var valid = !isNaN(parseFloat(value));
-    return valid || "Please enter a number";
+function validateNumber(type,value) {
+    // var valid = !isNaN(parseFloat(value));
+    var numbers = /^[0-9]+$/;
+    var valid = numbers.test(value);
+    var message='';
+    if(type === 'id')
+    {
+        message = "Please enter a positive integer for valid ID";
+    }
+    else {
+        message = "Please enter a positive integer for valid Office Number";
+
+    }
+    return valid || message;
 }
 
 init();
