@@ -44,6 +44,11 @@ const init = async () => {
         if (wantInternDetails.wantToEnterIntern === true) {
             const internInfo = await getInternsDetails();
             for (let i = 0; i < internInfo.length; i++) {
+                if(internInfo[i].school === 'Not Provided')
+                {
+                    internInfo[i].school = 'Not Provided';
+                    
+                }
                 const internObj = new Intern(internInfo[i].name, internInfo[i].id, internInfo[i].email, internInfo[i].school);
                 employees.push(internObj);
             }
